@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -35,6 +37,23 @@ type DBParams struct {
 }
 
 func main() {
+	uri := os.Getenv("BROKER_DB")
+	db, err := sql.Open("postgres", uri)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(2)
+	}
+
+	// setup the database (or modify it as necessary)
+	buf, err := ioutil.ReadFile("create.sql")
+	if err != nil {
+		log.Fatalf("Unable to read create.sql: %s\n", err)
+	}
+	_, err = db.Query(string(buf))
+	if err != nil {
+		log.Fatal("Unable to create database: %s\n", err)
+	}
+
 	provision_micro, _ := strconv.Atoi(os.Getenv("PROVISION_MICRO"))
 	provision_small, _ := strconv.Atoi(os.Getenv("PROVISION_SMALL"))
 	provision_medium, _ := strconv.Atoi(os.Getenv("PROVISION_MEDIUM"))
