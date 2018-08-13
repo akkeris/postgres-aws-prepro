@@ -182,7 +182,7 @@ func provision(plan string) DBParams {
 		dbparams.Iops = int64(1000)
 	}
 	svc := rds.New(session.New(&aws.Config{
-		Region: aws.String("us-west-2"),
+		Region: aws.String(os.Getenv("REGION")),
 	}))
 
 	params := &rds.CreateDBInstanceInput{
