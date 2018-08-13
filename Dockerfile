@@ -1,4 +1,4 @@
-FROM golang:1.5-alpine
+FROM golang:1.8-alpine
 RUN echo "extra"
 RUN apk update
 RUN apk add git
