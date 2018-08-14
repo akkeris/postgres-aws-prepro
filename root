@@ -5,6 +5,6 @@
 0       2       *       *       *       run-parts /etc/periodic/daily
 0       3       *       *       6       run-parts /etc/periodic/weekly
 0       5       1       *       *       run-parts /etc/periodic/monthly
-*/1      *       *       *       *     /go/src/oct-postgres-preprovision/oct-postgres-preprovision
+*/1      *       *       *       *     cd /go/src/oct-postgres-preprovision && ./oct-postgres-preprovision
 
 
