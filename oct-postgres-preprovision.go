@@ -43,6 +43,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(2)
 	}
+	defer db.Close()
 
 	// setup the database (or modify it as necessary)
 	buf, err := ioutil.ReadFile("create.sql")
