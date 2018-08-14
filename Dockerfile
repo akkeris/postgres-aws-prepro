@@ -1,7 +1,7 @@
 FROM golang:1.8-alpine
 RUN echo "extra"
 RUN apk update
-RUN apk add git
+RUN apk add git --no-cache
 RUN apk add tzdata
 RUN cp /usr/share/zoneinfo/America/Denver /etc/localtime
 ADD root /var/spool/cron/crontabs/root
