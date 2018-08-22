@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -35,6 +37,24 @@ type DBParams struct {
 }
 
 func main() {
+	uri := os.Getenv("BROKER_DB")
+	db, err := sql.Open("postgres", uri)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(2)
+	}
+	defer db.Close()
+
+	// setup the database (or modify it as necessary)
+	buf, err := ioutil.ReadFile("create.sql")
+	if err != nil {
+		log.Fatalf("Unable to read create.sql: %s\n", err)
+	}
+	_, err = db.Exec(string(buf))
+	if err != nil {
+		log.Fatal("Unable to create database: %s\n", err)
+	}
+
 	provision_micro, _ := strconv.Atoi(os.Getenv("PROVISION_MICRO"))
 	provision_small, _ := strconv.Atoi(os.Getenv("PROVISION_SMALL"))
 	provision_medium, _ := strconv.Atoi(os.Getenv("PROVISION_MEDIUM"))
@@ -66,6 +86,7 @@ func record(dbparams DBParams, plan string) {
 		fmt.Println(err)
 		os.Exit(2)
 	}
+	defer db.Close()
 	var newname string
 	err = db.QueryRow("INSERT INTO provision(name,plan,claimed,masterpass,masteruser,endpoint) VALUES($1,$2,$3,$4,$5,$6) returning name;", dbparams.Dbname, plan, "no", dbparams.Masterpassword, dbparams.Masterusername, dbparams.Endpoint).Scan(&newname)
 	if err != nil {
@@ -105,21 +126,21 @@ func provision_hobby() DBParams {
 	}
 	defer db.Close()
 
-	_, dberr := db.Query("CREATE USER " + dbparams.Masterusername + " WITH PASSWORD '" + dbparams.Masterpassword + "' NOINHERIT")
+	_, dberr := db.Exec("CREATE USER " + dbparams.Masterusername + " WITH PASSWORD '" + dbparams.Masterpassword + "' NOINHERIT")
 	fmt.Println("creating user")
 	if dberr != nil {
 		fmt.Println(dberr)
 		os.Exit(2)
 	}
 
-	_, dberr = db.Query("GRANT " + dbparams.Masterusername + " TO " + hobby_admin)
+	_, dberr = db.Exec("GRANT " + dbparams.Masterusername + " TO " + hobby_admin)
 	fmt.Println("granting permission")
 	if dberr != nil {
 		fmt.Println(dberr)
 		os.Exit(2)
 	}
 
-	_, dberr = db.Query("CREATE DATABASE " + dbparams.Dbname + " OWNER " + dbparams.Masterusername)
+	_, dberr = db.Exec("CREATE DATABASE " + dbparams.Dbname + " OWNER " + dbparams.Masterusername)
 	fmt.Println("granting permission")
 	if dberr != nil {
 		fmt.Println(dberr)
@@ -182,7 +203,7 @@ func provision(plan string) DBParams {
 		dbparams.Iops = int64(1000)
 	}
 	svc := rds.New(session.New(&aws.Config{
-		Region: aws.String("us-west-2"),
+		Region: aws.String(os.Getenv("REGION")),
 	}))
 
 	params := &rds.CreateDBInstanceInput{
