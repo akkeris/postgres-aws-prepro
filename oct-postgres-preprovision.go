@@ -50,7 +50,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to read create.sql: %s\n", err)
 	}
-	_, err = db.Query(string(buf))
+	_, err = db.Exec(string(buf))
 	if err != nil {
 		log.Fatal("Unable to create database: %s\n", err)
 	}
@@ -86,6 +86,7 @@ func record(dbparams DBParams, plan string) {
 		fmt.Println(err)
 		os.Exit(2)
 	}
+	defer db.Close()
 	var newname string
 	err = db.QueryRow("INSERT INTO provision(name,plan,claimed,masterpass,masteruser,endpoint) VALUES($1,$2,$3,$4,$5,$6) returning name;", dbparams.Dbname, plan, "no", dbparams.Masterpassword, dbparams.Masterusername, dbparams.Endpoint).Scan(&newname)
 	if err != nil {
@@ -125,21 +126,21 @@ func provision_hobby() DBParams {
 	}
 	defer db.Close()
 
-	_, dberr := db.Query("CREATE USER " + dbparams.Masterusername + " WITH PASSWORD '" + dbparams.Masterpassword + "' NOINHERIT")
+	_, dberr := db.Exec("CREATE USER " + dbparams.Masterusername + " WITH PASSWORD '" + dbparams.Masterpassword + "' NOINHERIT")
 	fmt.Println("creating user")
 	if dberr != nil {
 		fmt.Println(dberr)
 		os.Exit(2)
 	}
 
-	_, dberr = db.Query("GRANT " + dbparams.Masterusername + " TO " + hobby_admin)
+	_, dberr = db.Exec("GRANT " + dbparams.Masterusername + " TO " + hobby_admin)
 	fmt.Println("granting permission")
 	if dberr != nil {
 		fmt.Println(dberr)
 		os.Exit(2)
 	}
 
-	_, dberr = db.Query("CREATE DATABASE " + dbparams.Dbname + " OWNER " + dbparams.Masterusername)
+	_, dberr = db.Exec("CREATE DATABASE " + dbparams.Dbname + " OWNER " + dbparams.Masterusername)
 	fmt.Println("granting permission")
 	if dberr != nil {
 		fmt.Println(dberr)
